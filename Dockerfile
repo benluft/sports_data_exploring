@@ -1,0 +1,25 @@
+# See https://towardsdatascience.com/a-complete-guide-to-building-a-docker-image-serving-a-machine-learning-system-in-production-d8b5b0533bde for how to make a dockerfile
+
+# Step 1 check version of CUDA, see output of nvidia-smi command
+# Mine is code version 10.2 and cudnn-7
+# This means I should use tensorflow-2.2.0
+
+FROM nvidia/cuda:10.2-cudnn8-runtime
+
+
+
+RUN apt update && \
+    apt install --no-install-recommends -y build-essential software-properties-common && \
+    add-apt-repository -y ppa:deadsnakes/ppa && \
+    apt install --no-install-recommends -y python3.7 python3-pip python3-setuptools python3-distutils && \
+    apt clean && rm -rf /var/lib/apt/lists/* && \
+    export LD_LIBRARY_PATH=/usr/local/cuda-11.1/lib64 && \
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+
+COPY req.txt /req.txt
+COPY ./src /src
+RUN python3.7 -m pip install --upgrade pip && \
+    python3.7 -m pip install --no-cache-dir -r /req.txt
+RUN python3.7 /src/app.py
+EXPOSE 8080
